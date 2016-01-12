@@ -1,6 +1,7 @@
-import praw
+import Util
 import time 
 import pickle
+import praw
 import sys
 
 def main(argv):
@@ -13,7 +14,7 @@ def main(argv):
 
 	f = open(out_file, 'wb')
 
-	r = praw.Reddit('Data Collection') 
+	r = Util.reddit_api
 
 	# Run until keyboard interruption
 	loop = True
@@ -22,7 +23,7 @@ def main(argv):
 			new_front_page = r.get_new(limit=limit)
 
 			new_posts = [post for post in new_front_page if post.id not in post_ids]
-			
+
 			# Just cotinue if we got nothing
 			if len(new_posts) == 0:
 				continue
