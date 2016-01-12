@@ -1,7 +1,6 @@
 import praw
 import time 
 import pickle
-from exceptions import UnicodeEncodeError
 import sys
 
 def main(argv):
@@ -17,37 +16,36 @@ def main(argv):
 	r = praw.Reddit('Data Collection') 
 
 	# Run until keyboard interruption
-	while True:
-		
-		new_front_page = r.get_new(limit=limit)
-
-		# Catch any errors in collecting the posts 
+	loop = True
+	while loop:
 		try:
+			new_front_page = r.get_new(limit=limit)
+
 			new_posts = [post for post in new_front_page if post.id not in post_ids]
-		except praw.errors.HTTPException:
-			print "error"
-			continue
+			
+			# Just cotinue if we got nothing
+			if len(new_posts) == 0:
+				continue
 
-		# Just cotinue if we got nothing
-		if len(new_posts) == 0:
-			continue
+			# Update the set of post ids
+			post_ids.update([post.fullname for post in new_posts])
 
-		# Update the set of post ids
-		post_ids.update([post.id for post in new_posts])
-
-		# Print last post title
-		print "Collected {} new posts".format(len(new_posts))
-		try:
+			# Print some information
+			print "Collected {} new posts".format(len(new_posts))
 			print "Title of last new post = {}".format(new_posts[-1].title)
-		except UnicodeEncodeError:
-			pass
-
-		# Write comment list to file
-		print "Writing reddit comment object list to file"
-		pickle.dump(new_posts, f)
+			
+			#Sleep till next call
+			time.sleep(sleep)
 
 		# Sleep until next call
-		time.sleep(sleep)
+		except praw.errors.HTTPException:
+			continue
+		except UnicodeEncodeError:
+			pass
+		except KeyboardInterrupt:
+			pickle.dump(post_ids, f)
+			loop = False
+			break
 
 if __name__ == "__main__":
 	main(sys.argv)
